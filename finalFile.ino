@@ -63,7 +63,7 @@ void reconnect() {
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
+      client.publish("outTopic", "Voltage Consumed");
       // ... and resubscribe
       client.subscribe("inTopic");
     } else {
@@ -149,7 +149,7 @@ void loop() {
     if (now - lastMsg > 2000) {
       lastMsg = now;
       ++value;
-      snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
+      snprintf (msg, MSG_BUFFER_SIZE, "Voltage Consumed #%ld", value);
       Serial.print("Publish message: ");
       Serial.println(msg);
       client.publish("outTopic", msg);
