@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -10,9 +9,12 @@ int i = 0;
 int statusCode;
 const char* ssid = "text";
 const char* passphrase = "text";
-const char* mqtt_server = "192.168.29.193"; // Public IP
+const char* mqtt_server = "ec2-54-158-163-228.compute-1.amazonaws.com"; // Public IP
 String st;
 String content;
+
+#define r1 12
+#define r2 13
 
 //Function Declaration
 bool testWifi(void);
@@ -34,21 +36,39 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print(topic);
   Serial.print("] ");
 
+  char signalDataTemp[length];
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+    // Serial.print((char)payload[i]);
+    signalDataTemp[i] = ((char)payload[i]);
   }
-  Serial.println();
 
-  if ((char)payload[0] == '1') {
-    digitalWrite(13, HIGH);
-  }
-  else if ((char)payload[0] == '0') {  // Switch on the LED if an 0 was received as first character
-    digitalWrite(13, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-  }
-  else {
-    digitalWrite(13, LOW);  // Turn the LED off by making the voltage HIGH
+  int signalData = atoi(signalDataTemp);
+
+  Serial.println(signalData);
+
+  switch (signalData) {
+    case 10:
+      digitalWrite(r1, HIGH);
+      break;
+
+    case 11:
+      Serial.print("11 ok");
+      digitalWrite(r1, LOW);
+      break;
+
+    case 20:
+      digitalWrite(r2, HIGH);
+      break;
+
+    case 21:
+      Serial.print("21 ok");
+      digitalWrite(r2, LOW);
+      break;
+
+    default:
+      //      digitalWrite(r1, HIGH);
+      //      digitalWrite(r2, HIGH);
+      break;
   }
 }
 
@@ -57,15 +77,15 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
-    String clientId = "ESP8266Client-";
+    String clientId = "Client-"; // ESP8266Client
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("outTopic", "Voltage Consumed");
+      client.publish("outTopic", "API Connected"); // outTopic
       // ... and resubscribe
-      client.subscribe("inTopic");
+      client.subscribe("inTopic"); // inTopic
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -85,7 +105,10 @@ void setup()
   WiFi.disconnect();
   EEPROM.begin(512); //Initializing EEPROM
   delay(10);
-  pinMode(13, OUTPUT);
+  pinMode(r1, OUTPUT);
+  pinMode(r2, OUTPUT);
+  digitalWrite(r1, HIGH);
+  digitalWrite(r2, HIGH);
   Serial.println();
   Serial.println();
   Serial.println("Startup");
@@ -150,9 +173,9 @@ void loop() {
       lastMsg = now;
       ++value;
       snprintf (msg, MSG_BUFFER_SIZE, "Voltage Consumed #%ld", value);
-      Serial.print("Publish message: ");
-      Serial.println(msg);
-      client.publish("outTopic", msg);
+      // Serial.print("Publish message: ");
+      // Serial.println(msg);
+      // client.publish("outTopic", msg); // outTopic
     }
   }
   else
@@ -238,7 +261,7 @@ void setupAP(void)
   }
   st += "</ol>";
   delay(100);
-  WiFi.softAP("ESP-NAME", "");
+  WiFi.softAP("Mikdan NodeMCU", "");
   Serial.println("Initializing_Wifi_accesspoint");
   launchWeb();
   Serial.println("over");
